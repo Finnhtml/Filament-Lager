@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filament Lager | Live Bestandsübersicht</title>
+    
+    <style>
+        /* --- CSS-Variablen für einfache Farbanpassung --- */
+        :root {
+            --bg-color: #f7f9fc;          /* Heller Hintergrund */
+            --card-bg-color: #ffffff;     /* Weiße Karten */
+            --text-color: #333333;        /* Dunkler Text */
+            --primary-color: #4CAF50;     /* Helles Grün (Akzent) */
+            --secondary-color: #2196F3;   /* Blau (ID) */
+            --border-color: #e0e0e0;
+            --success-color: #4CAF50;     /* Neu */
+            --warning-color: #FFC107;     /* Gebraucht */
+            --danger-color: #F44336;      /* Sonstiges/Leer */
+        }
+        
+        /* --- Allgemeine Stile --- */
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            padding: 20px 10px;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+            font-size: 1.8em;
+            font-weight: 500;
+        }
+
+        /* --- Filament Card Styling --- */
+        .filament-post {
+            background: var(--card-bg-color);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            border-left: 5px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .highlight {
+            border-left-color: var(--secondary-color); /* Blauer Balken für neueste Rolle */
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+            animation: pulse-border 2s infinite alternate;
+        }
+        
+        @keyframes pulse-border {
+            from { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
+            to { box-shadow: 0 6px 15px rgba(33, 150, 243, 0.4); }
+        }
+
+        /* Titelzeile und ID */
+        .filament-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .filament-material {
+            color: var(--text-color);
+            font-size: 1.3em;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .filament-id-tag {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: var(--secondary-color);
+            padding: 4px 10px;
+            background: rgba(33, 150, 243, 0.1); /* Hellblauer Hintergrund */
+            border-radius: 50px;
+        }
+
+        /* Detail-Grid */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 15px;
+            font-size: 0.9em;
+            padding: 10px 0;
+            border-top: 1px dashed #e0e0e0;
+            margin-bottom: 10px;
+        }
+
+        .detail-label {
+            color: #757575; /* Graues Label */
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-weight: 400;
+            color: var(--text-color);
+        }
+        
+        /* Status Badge */
+        .status-badge {
+            position: absolute;
+            top: 0; 
+            right: 0;
+            padding: 6px 14px;
+            border-top-right-radius: 10px;
+            border-bottom-left-radius: 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .status-badge.neu { background: var(--success-color); }
+        .status-badge.gebraucht { background: var(--warning-color); color: var(--text-color); }
+        .status-badge.sonstiges { background: var(--danger-color); }
+
+        /* Timestamp */
+        .timestamp {
+            font-size: 0.75em;
+            color: #9E9E9E;
+            text-align: right;
+            border-top: 1px dashed #e0e0e0;
+            padding-top: 10px;
+        }
+        
+        /* Spinner */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #spinner {
+            display: none; 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            z-index: 1000;
+        }
+        #spinner > div {
+            border: 4px solid #f0f0f0; 
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%; 
+            width: 25px; 
+            height: 25px; 
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Filament Lager: <span id="roll-count">0</span> Rollen</h2>
+    <div id="spinner">
+        <div></div>
+    </div>
+    <div id="postsContainer">
+        <div style="text-align: center; padding: 40px; color: #757575;">Daten werden geladen...</div>
+    </div>
+</div>
+
+<script>
+    const postsContainer = document.getElementById('postsContainer');
+    const spinner = document.getElementById('spinner');
+    const rollCount = document.getElementById('roll-count');
+    
+    // WICHTIG: ERSETZEN SIE DIESE URL durch Ihre bereitgestellte Apps Script URL!
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyYd7OKN3y8q2lZ-JLGGa8gp3JlhObdFBhRr0eeyNDlwVddoEKgMqwgz7RCvtyCdfDa/exec'; 
+
+    async function loadPosts(showSpinner = false) {
+        if (showSpinner) spinner.style.display = 'block'; 
+
+        try {
+            const res = await fetch(API_URL);
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            const posts = await res.json();
+            
+            postsContainer.innerHTML = '';
+            
+            if (posts.length === 0) {
+                postsContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #757575;">Keine Filamente im Lager gefunden.</div>';
+                rollCount.textContent = 0;
+                return;
+            }
+            
+            // Gesamtanzahl der Rollen im Header aktualisieren
+            rollCount.textContent = posts.length;
+            
+            // Filamente nach der ID (Reihennummer) sortieren (neuester zuerst)
+            posts.sort((a, b) => b.id - a.id);
+            
+            posts.forEach((filament, i) => {
+                const div = document.createElement('div');
+                div.className = 'filament-post';
+                
+                if (i === 0) div.classList.add('highlight'); 
+
+                // Status für Badge bestimmen
+                let statusClass = 'neu';
+                const statusText = String(filament.status).toLowerCase();
+                
+                if (statusText.includes('gebraucht')) {
+                    statusClass = 'gebraucht';
+                } else if (statusText.includes('sonstiges') || statusText.includes('leer')) {
+                    statusClass = 'sonstiges';
+                } else if (statusText.includes('neu')) {
+                    statusClass = 'neu';
+                }
+                
+                // HTML-Struktur des Eintrags mit dem neuen Details-Grid
+                div.innerHTML = `
+                    <div class="status-badge ${statusClass}">
+                        ${String(filament.status).toUpperCase()}
+                    </div>
+
+                    <div class="filament-title-row">
+                        <span class="filament-material">${filament.material}</span>
+                        <span class="filament-id-tag">ID: ${filament.filamentId}</span>
+                    </div>
+                    
+                    <div class="details-grid">
+                        <div class="detail-label">Farbe</div><div class="detail-value">${filament.color}</div>
+                        <div class="detail-label">Hersteller</div><div class="detail-value">${filament.brand}</div>
+                        <div class="detail-label">Gewicht</div><div class="detail-value">${filament.weight}</div>
+                        <div></div>
+                    </div>
+
+                    <div class="timestamp">
+                        Eingetragen am: ${filament.time}
+                    </div>
+                `;
+                postsContainer.appendChild(div);
+            });
+            
+        } catch (error) {
+            console.error("Fehler beim Laden der Filamente:", error);
+            postsContainer.innerHTML = '<div style="color: var(--danger-color); text-align: center; padding: 40px;">Ein schwerer Fehler ist aufgetreten. Bitte API-URL und Berechtigungen prüfen.</div>';
+            rollCount.textContent = 'Fehler';
+        } finally {
+            spinner.style.display = 'none';
+        }
+    }
+
+    // Erstes Laden der Daten
+    loadPosts(false);
+
+    // Automatische Aktualisierung alle 1 Sekunde (1000 ms)
+    setInterval(() => loadPosts(true), 1000);
+</script>
+
+</body>
+</html>
