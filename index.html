@@ -10,14 +10,16 @@
     
     <style>
         /* ========================================================= */
-        /* --- 1. GLOBALE VARIABLEN & GRUNDEINSTELLUNGEN (KOMBINIERT) --- */
+        /* --- 1. GLOBALE VARIABLEN & GRUNDEINSTELLUNGEN --- */
         /* ========================================================= */
         :root {
+            /* Scanner-Farben */
             --primary-color: #4A90E2;      /* Haupt-Akzent (Scanner Blau) */
             --accent-color: #28a745;       /* Scanner-Erfolg (Grün) */
             --background-color: #f4f7f9;
             --card-background: #ffffff;
             --text-color: #333333;
+            /* Dashboard-Farben */
             --secondary-color: #2196F3;
             --border-color: #e0e0e0;
             --success-color: #4CAF50;      /* Status: Neu */
@@ -70,9 +72,8 @@
         /* --- 2. SCANNER & TOGGLE STILE --- */
         /* ========================================================= */
 
-        /* Scanner Sektion standardmäßig versteckt */
         #toggleSection {
-            display: none; 
+            display: none; /* Initial versteckt */
         }
 
         .toggle-button-container {
@@ -96,7 +97,7 @@
             transform: translateY(-2px);
         }
         
-        /* Kamerabereich und Barcode-Output Stile beibehalten */
+        /* Scanner-Details */
         #interactive.viewport {
             width: 100%; max-width: 400px; height: 250px; margin: 15px auto; position: relative; overflow: hidden;
             border: 3px solid var(--primary-color); border-radius: 8px; box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
@@ -122,7 +123,7 @@
         }
 
         /* ========================================================= */
-        /* --- 3. DASHBOARD STILE (Code 1) beibehalten --- */
+        /* --- 3. DASHBOARD STILE --- */
         /* ========================================================= */
 
         .filament-post {
@@ -251,7 +252,7 @@
 
     async function loadPosts(showSpinner = false) {
         if (showSpinner) spinner.style.display = 'block'; 
-        // ... (Der Rest der loadPosts-Funktion bleibt unverändert)
+
         try {
             const res = await fetch(API_URL);
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -319,8 +320,9 @@
         }
     }
 
-    // Automatisches Aktualisieren der Übersicht alle 1 Sekunde
-    setInterval(() => loadPosts(true), 1000); 
+    // Automatische Aktualisierung der Übersicht alle 30 Sekunden (OPTIMIERT)
+    const UPDATE_INTERVAL_MS = 30000;
+    setInterval(() => loadPosts(true), UPDATE_INTERVAL_MS); 
 
 
     // =========================================================
@@ -331,6 +333,7 @@
     let lastScannedCode = null;
     let scanDebounceTimer = null;
     
+    // AudioContext für den Piepton
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
     function playBeep() {
@@ -347,8 +350,10 @@
     }
     
     function autoCopy(code) {
+        // Kopiert den ÜBERGEBENEN Code in die Zwischenablage
         navigator.clipboard.writeText(code).then(() => {
             console.log(`Barcode "${code}" automatisch kopiert.`);
+            // Optisches Feedback
             const outputElement = document.getElementById('barcode-output');
             outputElement.style.backgroundColor = '#d4edda';
             setTimeout(() => {
@@ -388,17 +393,23 @@
         Quagga.onDetected(function(result) {
             const code = result.codeResult.code;
 
+            // Debouncing: verhindert Mehrfachscans
             if (code !== lastScannedCode || !scanDebounceTimer) {
-                document.getElementById('barcode-output').innerText = code;
-                playBeep();
-                autoCopy(code);
                 
+                // 1. Code in das Output-Feld schreiben
+                document.getElementById('barcode-output').innerText = code;
+                
+                // 2. Aktionen mit dem EINDEUTIGEN Code ausführen
+                playBeep();
+                autoCopy(code); // **KORREKTUR:** Übergibt den aktuellen Code an die Kopierfunktion
+                
+                // 3. Debounce-Logik aktualisieren
                 lastScannedCode = code;
                 if (scanDebounceTimer) clearTimeout(scanDebounceTimer);
                 scanDebounceTimer = setTimeout(() => {
                     scanDebounceTimer = null;
                     lastScannedCode = null; 
-                }, 2000);
+                }, 2000); // 2 Sekunden Pause nach Scan
             }
         });
     }
@@ -418,6 +429,7 @@
             return;
         }
 
+        // Kopiert den Text, der aktuell im Output-Feld steht
         navigator.clipboard.writeText(barcodeText).then(() => {
             alert('Barcode "' + barcodeText + '" manuell erfolgreich kopiert!');
         }).catch(err => {
@@ -435,23 +447,22 @@
         const isVisible = toggleSection.style.display === 'block';
 
         if (isVisible) {
-            // Verstecken
+            // Verstecken und Scanner stoppen
             toggleSection.style.display = 'none';
             toggleButton.innerText = '+ Filament hinzufügen (Barcode-Scanner/Formular öffnen)';
-            stopScanner(); // Kamera stoppen, um Ressourcen zu sparen
+            stopScanner();
         } else {
-            // Anzeigen
+            // Anzeigen und Scanner starten
             toggleSection.style.display = 'block';
             toggleButton.innerText = '✕ Scanner/Formular schließen';
-            startScanner(); // Scanner starten
+            startScanner();
         }
     }
 
 
-    // ERSTES LADEN: Nur das Dashboard starten
+    // ERSTES LADEN
     window.onload = function() {
         loadPosts(false);
-        // Der Scanner startet NICHT automatisch beim Laden, da er initial versteckt ist.
     }
 </script>
 
