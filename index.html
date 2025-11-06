@@ -13,16 +13,18 @@
         /* --- 1. GLOBALE VARIABLEN & GRUNDEINSTELLUNGEN --- */
         /* ========================================================= */
         :root {
-            --primary-color: #4A90E2;      
-            --accent-color: #28a745;       
+            /* Scanner-Farben */
+            --primary-color: #4A90E2;      /* Haupt-Akzent (Scanner Blau) */
+            --accent-color: #28a745;       /* Scanner-Erfolg (Grün) */
             --background-color: #f4f7f9;
             --card-background: #ffffff;
             --text-color: #333333;
+            /* Dashboard-Farben */
             --secondary-color: #2196F3;
             --border-color: #e0e0e0;
-            --success-color: #4CAF50;      /* Status: Aktiv/Neu */
+            --success-color: #4CAF50;      /* Status: Neu */
             --warning-color: #FFC107;      /* Status: Gebraucht */
-            --danger-color: #F44336;       /* Status: Archiviert/Aufgebraucht */
+            --danger-color: #F44336;       /* Status: Sonstiges/Leer */
         }
         
         body {
@@ -67,26 +69,63 @@
         }
         
         /* ========================================================= */
-        /* --- 2. DASHBOARD & SUCHE STILE --- */
+        /* --- 2. SCANNER & TOGGLE STILE --- */
         /* ========================================================= */
 
-        #filter-input {
-            width: 100%;
-            padding: 12px 15px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 1rem;
-            box-sizing: border-box;
-            transition: border-color 0.2s, box-shadow 0.2s;
+        #toggleSection {
+            display: none; /* Initial versteckt */
         }
 
-        #filter-input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
-            outline: none;
+        .toggle-button-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #toggle-scanner-button {
+            padding: 12px 30px;
+            background-color: var(--accent-color); /* Grüner Akzent für "Hinzufügen" */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        #toggle-scanner-button:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
         }
         
+        /* Scanner-Details */
+        #interactive.viewport {
+            width: 100%; max-width: 400px; height: 250px; margin: 15px auto; position: relative; overflow: hidden;
+            border: 3px solid var(--primary-color); border-radius: 8px; box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #interactive.viewport canvas, video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        #barcode-output {
+            margin: 20px 0 15px; padding: 15px; border: 2px solid var(--accent-color);
+            background-color: #e2ffe8; font-weight: 700; font-size: 1.2rem;
+            border-radius: 8px; word-break: break-all; text-align: center;
+        }
+
+        .controls { text-align: center; margin-bottom: 20px; }
+        .controls button, #copy-button {
+            padding: 10px 20px; background-color: var(--primary-color); color: white; border: none;
+            border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s; margin: 5px;
+        }
+        .controls button:hover { background-color: #3870b8; transform: translateY(-1px); }
+        
+        #google-form-embed {
+            width: 100%; height: 600px; border: 1px solid var(--border-color); border-radius: 8px;
+        }
+
+        /* ========================================================= */
+        /* --- 3. DASHBOARD STILE --- */
+        /* ========================================================= */
+
         .filament-post {
             background: var(--card-background); padding: 20px; margin-bottom: 15px; border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); position: relative; border-left: 5px solid transparent;
@@ -98,6 +137,11 @@
             animation: pulse-border 2s infinite alternate;
         }
         
+        @keyframes pulse-border {
+            from { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+            to { box-shadow: 0 6px 15px rgba(33, 150, 243, 0.4); }
+        }
+
         .filament-title-row {
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
         }
@@ -121,69 +165,24 @@
             border-bottom-left-radius: 10px; font-size: 0.8em; font-weight: bold; color: white;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
-        .status-badge.aktiv { background: var(--success-color); }
+        .status-badge.neu { background: var(--success-color); }
         .status-badge.gebraucht { background: var(--warning-color); color: var(--text-color); }
-        .status-badge.archiviert { background: var(--danger-color); }
+        .status-badge.sonstiges { background: var(--danger-color); }
 
         .timestamp {
             font-size: 0.75em; color: #9E9E9E; text-align: right; border-top: 1px dashed var(--border-color);
             padding-top: 10px;
         }
         
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px dashed var(--border-color);
-        }
-
-        .action-buttons button {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            font-size: 0.9em;
-        }
-        
-        .btn-gebraucht {
-            background-color: var(--warning-color);
-            color: var(--text-color);
-        }
-        .btn-gebraucht:hover {
-            background-color: #ffda79;
-        }
-
-        .btn-aufgebraucht {
-            background-color: var(--danger-color);
-            color: white;
-        }
-        .btn-aufgebraucht:hover {
-            background-color: #c43c30;
-        }
-        
-        /* Spinner und Scanner Styles bleiben unverändert */
-        @keyframes pulse-border {
-            from { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
-            to { box-shadow: 0 6px 15px rgba(33, 150, 243, 0.4); }
-        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #spinner { display: none; position: fixed; top: 20px; right: 20px; z-index: 1000; }
-        #spinner > div { border: 4px solid #f0f0f0; border-top: 4px solid var(--accent-color); border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite; }
-        #toggleSection { display: none; }
-        .toggle-button-container { text-align: center; margin-bottom: 20px; }
-        #toggle-scanner-button { padding: 12px 30px; background-color: var(--accent-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: 600; transition: background-color 0.2s, transform 0.1s; }
-        #toggle-scanner-button:hover { background-color: #218838; transform: translateY(-2px); }
-        #interactive.viewport { width: 100%; max-width: 400px; height: 250px; margin: 15px auto; position: relative; overflow: hidden; border: 3px solid var(--primary-color); border-radius: 8px; box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1); }
-        #interactive.viewport canvas, video { width: 100%; height: 100%; object-fit: cover; display: block; }
-        #barcode-output { margin: 20px 0 15px; padding: 15px; border: 2px solid var(--accent-color); background-color: #e2ffe8; font-weight: 700; font-size: 1.2rem; border-radius: 8px; word-break: break-all; text-align: center; }
-        .controls { text-align: center; margin-bottom: 20px; }
-        .controls button, #copy-button { padding: 10px 20px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: background-color 0.2s, transform 0.1s; margin: 5px; }
-        .controls button:hover { background-color: #3870b8; transform: translateY(-1px); }
-        #google-form-embed { width: 100%; height: 600px; border: 1px solid var(--border-color); border-radius: 8px; }
-
+        #spinner {
+            display: none; position: fixed; top: 20px; right: 20px; z-index: 1000;
+        }
+        #spinner > div {
+            border: 4px solid #f0f0f0; border-top: 4px solid var(--accent-color);
+            border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite;
+        }
+        
     </style>
 </head>
 <body>
@@ -202,26 +201,33 @@
 
     <div id="toggleSection" class="card-section">
         <h2>📷 Barcode-Erfassung</h2>
+        
         <div id="interactive" class="viewport"></div>
+
         <div class="controls">
             <button onclick="startScanner()">Scanner neu starten</button>
             <button onclick="stopScanner()">Scanner stoppen</button>
         </div>
+
         <h3>Erkanntes ID-Ergebnis:</h3>
-        <div id="barcode-output">Hier erscheint der gescannte Code...</div>
-        <button id="copy-button" onclick="copyBarcode()">📋 Manuell kopieren</button>
+        <div id="barcode-output">
+            Hier erscheint der gescannte Code...
+        </div>
+
+        <button id="copy-button" onclick="copyBarcode()">
+            📋 Manuell kopieren
+        </button>
+        
         <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 30px 0;">
+
         <h2>📄 Filament eintragen</h2>
-        <iframe id="google-form-embed" src="https://docs.google.com/forms/d/e/1FAIpQLSdHpbzo_r3437upRg6P-diaE74N16IBiM422_TLBasa_LoOfw/viewform?embedded=true"></iframe>
+        <iframe id="google-form-embed" src="https://docs.google.com/forms/d/e/1FAIpQLSeiWTkDFHc0OLWKei7bXMhW7UJSNOW5VpmUj7sI-lNlkT5O3g/viewform?embedded=true"></iframe>
     </div>
     
     <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 30px 0;">
 
     <div id="dashboard-section" class="card-section">
-        <h2 style="margin-bottom: 10px;">Live Bestandsübersicht: <span id="roll-count">0</span> Rollen</h2>
-        
-        <input type="text" id="filter-input" placeholder="Filament suchen (Material, Farbe, ID, Hersteller...)" onkeyup="filterPosts()">
-
+        <h2>Live Bestandsübersicht: <span id="roll-count">0</span> Rollen</h2>
         <div id="spinner">
             <div></div>
         </div>
@@ -232,195 +238,78 @@
 </div>
 
 <script>
-    let globalFilamentData = []; 
-    
     // =========================================================
-    // --- JAVASCRIPT: DASHBOARD & ACTION LOGIK (CODE 1) ---
+    // --- JAVASCRIPT: DASHBOARD LOGIK (CODE 1) ---
     // =========================================================
     const postsContainer = document.getElementById('postsContainer');
     const spinner = document.getElementById('spinner');
     const rollCount = document.getElementById('roll-count');
     const toggleSection = document.getElementById('toggleSection');
     const toggleButton = document.getElementById('toggle-scanner-button');
-    const filterInput = document.getElementById('filter-input');
     
-    // WICHTIG: ERSETZEN SIE DIESE URL durch Ihre Web-App-URL nach der NEUEN Bereitstellung!
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzu8NcY-qVMmNu7197S96GUGyE2Vn-AvwAhzdxorabk3gaSOiAxCHRIgiDzurbY7lVF/exec'; 
+    // WICHTIG: ERSETZEN SIE DIESE URL durch Ihre bereitgestellte Apps Script URL!
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyYd7OKN3y8q2lZ-JLGGa8gp3JlhObdFBhRr0eeyNDlwVddoEKgMqwgz7RCvtyCdfDa/exec'; 
 
-    /**
-     * Erstellt das HTML für eine Filament-Rolle inkl. Action-Buttons
-     */
-    function createPostHTML(filament, isNewest) {
-        let statusClass = 'aktiv';
-        const statusText = String(filament.status).toLowerCase().trim();
-        
-        if (statusText.includes('gebraucht')) {
-            statusClass = 'gebraucht';
-        } else if (statusText.includes('archiviert') || statusText.includes('aufgebraucht')) {
-            statusClass = 'archiviert';
-        } else if (statusText.includes('aktiv')) {
-            statusClass = 'aktiv';
-        }
-        
-        const div = document.createElement('div');
-        div.className = 'filament-post';
-        if (isNewest) div.classList.add('highlight'); 
-
-        div.innerHTML = `
-            <div class="status-badge ${statusClass}">
-                ${String(filament.status).toUpperCase()}
-            </div>
-            <div class="filament-title-row">
-                <span class="filament-material">${filament.material}</span>
-                <span class="filament-id-tag">ID: ${filament.id}</span>
-            </div>
-            <div class="details-grid">
-                <div class="detail-label">Farbe</div><div class="detail-value">${filament.color}</div>
-                <div class="detail-label">Hersteller</div><div class="detail-value">${filament.brand}</div>
-                <div class="detail-label">Gewicht</div><div class="detail-value">${filament.weight} g (Start: ${filament.initialWeight} g)</div>
-                <div></div>
-            </div>
-            <div class="timestamp">
-                Eingetragen am: ${new Date(filament.timestamp).toLocaleDateString()}
-            </div>
-            
-            <div class="action-buttons">
-                <button class="btn-gebraucht" onclick="updateFilamentStatus('${filament.id}', 'Gebraucht', this)">
-                    Als Gebraucht markieren
-                </button>
-                <button class="btn-aufgebraucht" onclick="updateFilamentStatus('${filament.id}', 'Aufgebraucht', this)">
-                    Als Aufgebraucht markieren
-                </button>
-            </div>
-        `;
-        return div;
-    }
-
-    /**
-     * NEUE FUNKTION: Sendet eine POST-Anfrage zur Statusänderung an Google Apps Script.
-     * @param {string} id - Die ID (Spalte F) des Filaments.
-     * @param {string} newStatus - Der neue Status ("Gebraucht" oder "Aufgebraucht").
-     * @param {HTMLElement} button - Der geklickte Button für Feedback.
-     */
-    async function updateFilamentStatus(id, newStatus, button) {
-        if (!confirm(`Status von ID ${id} auf "${newStatus}" ändern?`)) {
-            return;
-        }
-
-        const originalText = button.textContent;
-        button.textContent = 'Wird gesendet...';
-        button.disabled = true;
-
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    // Die ID, der Status und die Aktion für doPost
-                    action: 'updateStatus',
-                    id: id,
-                    newStatus: newStatus
-                })
-            });
-
-            const result = await response.json();
-
-            if (result.success === true) {
-                button.textContent = 'Erfolg! ✅';
-                // Die Seite nach erfolgreichem Update neu laden
-                loadPosts(true); 
-
-            } else {
-                button.textContent = 'Fehler! ❌';
-                alert('Fehler beim Ändern des Status: ' + result.message);
-                
-            }
-        } catch (error) {
-            console.error('Fetch Fehler:', error);
-            alert('Netzwerkfehler beim Aktualisieren des Status.');
-        } finally {
-            setTimeout(() => {
-                button.textContent = originalText;
-                button.disabled = false;
-            }, 1000); 
-        }
-    }
-
-
-    /**
-     * Zeigt die Liste der Filamente im Container an
-     */
-    function renderPosts(posts, filterTerm) {
-        postsContainer.innerHTML = '';
-        
-        if (posts.length === 0) {
-            postsContainer.innerHTML = `<div style="text-align: center; padding: 40px; color: #757575;">
-                ${filterTerm ? 'Keine Filamente gefunden, die der Suche entsprechen.' : 'Keine Filamente im Lager gefunden.'}
-            </div>`;
-            rollCount.textContent = 0;
-            return;
-        }
-        
-        // Die Rollenzahl wird hier nicht nur auf die gefilterte Liste gesetzt, 
-        // sondern auf die Gesamtzahl, wenn kein Filter aktiv ist.
-        const totalCount = filterTerm ? globalFilamentData.length : posts.length;
-        rollCount.textContent = totalCount;
-
-        posts.forEach((filament, i) => {
-            // Nur der neueste Eintrag erhält das Highlight, wenn nicht gefiltert wird
-            postsContainer.appendChild(createPostHTML(filament, i === 0 && filterTerm === ''));
-        });
-    }
-
-    /**
-     * Filtert die globale Filament-Liste basierend auf dem Suchfeld
-     */
-    function filterPosts() {
-        if (globalFilamentData.length === 0) return;
-        
-        const searchTerm = filterInput.value.toLowerCase().trim();
-        
-        if (searchTerm === '') {
-            renderPosts(globalFilamentData, '');
-            return;
-        }
-
-        const filteredPosts = globalFilamentData.filter(filament => {
-            const searchString = `${filament.material} ${filament.color} ${filament.brand} ${filament.id} ${filament.status}`.toLowerCase();
-            return searchString.includes(searchTerm);
-        });
-
-        renderPosts(filteredPosts, searchTerm);
-    }
-
-
-    /**
-     * Lädt die Daten von der API und aktualisiert die Anzeige
-     */
     async function loadPosts(showSpinner = false) {
-        if (filterInput.value.trim() !== '' && !showSpinner) {
-             return; 
-        }
-
         if (showSpinner) spinner.style.display = 'block'; 
 
         try {
-            // Hinzufügen des Action-Parameters für die getFilaments Funktion in Code.gs
-            const res = await fetch(API_URL + '?action=getFilaments');
+            const res = await fetch(API_URL);
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             const posts = await res.json();
             
-            // Sortiere hier einmalig, um das Highlight korrekt zu setzen
-            posts.sort((a, b) => b.id - a.id);
-            globalFilamentData = posts; 
-
-            if (filterInput.value.trim() === '') {
-                 renderPosts(globalFilamentData, '');
-            } else {
-                 filterPosts();
+            postsContainer.innerHTML = '';
+            
+            if (posts.length === 0) {
+                postsContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #757575;">Keine Filamente im Lager gefunden.</div>';
+                rollCount.textContent = 0;
+                return;
             }
+            
+            rollCount.textContent = posts.length;
+            
+            posts.sort((a, b) => b.id - a.id);
+            
+            posts.forEach((filament, i) => {
+                const div = document.createElement('div');
+                div.className = 'filament-post';
+                
+                if (i === 0) div.classList.add('highlight'); 
+
+                let statusClass = 'neu';
+                const statusText = String(filament.status).toLowerCase();
+                
+                if (statusText.includes('gebraucht')) {
+                    statusClass = 'gebraucht';
+                } else if (statusText.includes('sonstiges') || statusText.includes('leer')) {
+                    statusClass = 'sonstiges';
+                } else if (statusText.includes('neu')) {
+                    statusClass = 'neu';
+                }
+                
+                div.innerHTML = `
+                    <div class="status-badge ${statusClass}">
+                        ${String(filament.status).toUpperCase()}
+                    </div>
+
+                    <div class="filament-title-row">
+                        <span class="filament-material">${filament.material}</span>
+                        <span class="filament-id-tag">ID: ${filament.filamentId}</span>
+                    </div>
+                    
+                    <div class="details-grid">
+                        <div class="detail-label">Farbe</div><div class="detail-value">${filament.color}</div>
+                        <div class="detail-label">Hersteller</div><div class="detail-value">${filament.brand}</div>
+                        <div class="detail-label">Gewicht</div><div class="detail-value">${filament.weight}</div>
+                        <div></div>
+                    </div>
+
+                    <div class="timestamp">
+                        Eingetragen am: ${filament.time}
+                    </div>
+                `;
+                postsContainer.appendChild(div);
+            });
             
         } catch (error) {
             console.error("Fehler beim Laden der Filamente:", error);
@@ -444,6 +333,7 @@
     let lastScannedCode = null;
     let scanDebounceTimer = null;
     
+    // AudioContext für den Piepton
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
     function playBeep() {
@@ -460,14 +350,17 @@
     }
     
     function autoCopy(code) {
+        // Kopiert den ÜBERGEBENEN Code in die Zwischenablage
         navigator.clipboard.writeText(code).then(() => {
+            console.log(`Barcode "${code}" automatisch kopiert.`);
+            // Optisches Feedback
             const outputElement = document.getElementById('barcode-output');
             outputElement.style.backgroundColor = '#d4edda';
             setTimeout(() => {
                 outputElement.style.backgroundColor = '#e2ffe8';
             }, 500);
         }).catch(err => {
-            console.warn('Automatisches Kopieren fehlgeschlagen.', err);
+            console.warn('Automatisches Kopieren fehlgeschlagen. Bitte manuell kopieren.', err);
         });
     }
 
@@ -494,24 +387,29 @@
             }
             Quagga.start();
             isScannerRunning = true;
+            console.log("Scanner gestartet.");
         });
 
         Quagga.onDetected(function(result) {
             const code = result.codeResult.code;
 
+            // Debouncing: verhindert Mehrfachscans
             if (code !== lastScannedCode || !scanDebounceTimer) {
                 
+                // 1. Code in das Output-Feld schreiben
                 document.getElementById('barcode-output').innerText = code;
                 
+                // 2. Aktionen mit dem EINDEUTIGEN Code ausführen
                 playBeep();
-                autoCopy(code); 
+                autoCopy(code); // **KORREKTUR:** Übergibt den aktuellen Code an die Kopierfunktion
                 
+                // 3. Debounce-Logik aktualisieren
                 lastScannedCode = code;
                 if (scanDebounceTimer) clearTimeout(scanDebounceTimer);
                 scanDebounceTimer = setTimeout(() => {
                     scanDebounceTimer = null;
                     lastScannedCode = null; 
-                }, 2000); 
+                }, 2000); // 2 Sekunden Pause nach Scan
             }
         });
     }
@@ -521,6 +419,7 @@
         Quagga.stop();
         isScannerRunning = false;
         if (scanDebounceTimer) clearTimeout(scanDebounceTimer);
+        console.log("Scanner gestoppt.");
     }
 
     function copyBarcode() {
@@ -530,6 +429,7 @@
             return;
         }
 
+        // Kopiert den Text, der aktuell im Output-Feld steht
         navigator.clipboard.writeText(barcodeText).then(() => {
             alert('Barcode "' + barcodeText + '" manuell erfolgreich kopiert!');
         }).catch(err => {
@@ -547,10 +447,12 @@
         const isVisible = toggleSection.style.display === 'block';
 
         if (isVisible) {
+            // Verstecken und Scanner stoppen
             toggleSection.style.display = 'none';
             toggleButton.innerText = '+ Filament hinzufügen (Barcode-Scanner/Formular öffnen)';
             stopScanner();
         } else {
+            // Anzeigen und Scanner starten
             toggleSection.style.display = 'block';
             toggleButton.innerText = '✕ Scanner/Formular schließen';
             startScanner();
