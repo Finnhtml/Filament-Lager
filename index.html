@@ -3,187 +3,255 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Filament Lager | Live Bestandsübersicht</title>
+    <title>Filament Lager | Live-Übersicht & Barcode-Scanner</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
     
     <style>
-        /* --- CSS-Variablen für einfache Farbanpassung --- */
+        /* ========================================================= */
+        /* --- 1. GLOBALE VARIABLEN & GRUNDEINSTELLUNGEN (KOMBINIERT) --- */
+        /* ========================================================= */
         :root {
-            --bg-color: #f7f9fc;          /* Heller Hintergrund */
-            --card-bg-color: #ffffff;     /* Weiße Karten */
-            --text-color: #333333;        /* Dunkler Text */
-            --primary-color: #4CAF50;     /* Helles Grün (Akzent) */
-            --secondary-color: #2196F3;   /* Blau (ID) */
+            --primary-color: #4A90E2;      /* Haupt-Akzent (Scanner Blau) */
+            --accent-color: #28a745;       /* Scanner-Erfolg (Grün) */
+            --background-color: #f4f7f9;
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --secondary-color: #2196F3;
             --border-color: #e0e0e0;
-            --success-color: #4CAF50;     /* Neu */
-            --warning-color: #FFC107;     /* Gebraucht */
-            --danger-color: #F44336;      /* Sonstiges/Leer */
+            --success-color: #4CAF50;      /* Status: Neu */
+            --warning-color: #FFC107;      /* Status: Gebraucht */
+            --danger-color: #F44336;       /* Status: Sonstiges/Leer */
         }
         
-        /* --- Allgemeine Stile --- */
         body {
-            font-family: 'Roboto', Arial, sans-serif;
+            font-family: 'Poppins', 'Roboto', Arial, sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
+            padding: 20px 10px;
+            background-color: var(--background-color);
             color: var(--text-color);
             -webkit-font-smoothing: antialiased;
         }
 
         .container {
-            max-width: 650px;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 20px 10px;
+            padding: 0;
+        }
+        
+        .card-section {
+            background-color: var(--card-background);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            font-size: 2em;
+            font-weight: 700;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 30px;
         }
 
         h2 {
-            text-align: center;
-            color: var(--primary-color);
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 1.5rem;
             margin-top: 0;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--border-color);
-            font-size: 1.8em;
-            font-weight: 500;
+            margin-bottom: 20px;
+        }
+        
+        /* ========================================================= */
+        /* --- 2. SCANNER & TOGGLE STILE --- */
+        /* ========================================================= */
+
+        /* Scanner Sektion standardmäßig versteckt */
+        #toggleSection {
+            display: none; 
         }
 
-        /* --- Filament Card Styling --- */
+        .toggle-button-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #toggle-scanner-button {
+            padding: 12px 30px;
+            background-color: var(--accent-color); /* Grüner Akzent für "Hinzufügen" */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        #toggle-scanner-button:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+        
+        /* Kamerabereich und Barcode-Output Stile beibehalten */
+        #interactive.viewport {
+            width: 100%; max-width: 400px; height: 250px; margin: 15px auto; position: relative; overflow: hidden;
+            border: 3px solid var(--primary-color); border-radius: 8px; box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #interactive.viewport canvas, video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        #barcode-output {
+            margin: 20px 0 15px; padding: 15px; border: 2px solid var(--accent-color);
+            background-color: #e2ffe8; font-weight: 700; font-size: 1.2rem;
+            border-radius: 8px; word-break: break-all; text-align: center;
+        }
+
+        .controls { text-align: center; margin-bottom: 20px; }
+        .controls button, #copy-button {
+            padding: 10px 20px; background-color: var(--primary-color); color: white; border: none;
+            border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s; margin: 5px;
+        }
+        .controls button:hover { background-color: #3870b8; transform: translateY(-1px); }
+        
+        #google-form-embed {
+            width: 100%; height: 600px; border: 1px solid var(--border-color); border-radius: 8px;
+        }
+
+        /* ========================================================= */
+        /* --- 3. DASHBOARD STILE (Code 1) beibehalten --- */
+        /* ========================================================= */
+
         .filament-post {
-            background: var(--card-bg-color);
-            padding: 20px;
-            margin-bottom: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            position: relative;
-            border-left: 5px solid transparent;
+            background: var(--card-background); padding: 20px; margin-bottom: 15px; border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); position: relative; border-left: 5px solid transparent;
             transition: all 0.3s ease;
         }
 
         .highlight {
-            border-left-color: var(--secondary-color); /* Blauer Balken für neueste Rolle */
-            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+            border-left-color: var(--secondary-color); box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
             animation: pulse-border 2s infinite alternate;
         }
         
         @keyframes pulse-border {
-            from { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
+            from { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
             to { box-shadow: 0 6px 15px rgba(33, 150, 243, 0.4); }
         }
 
-        /* Titelzeile und ID */
         .filament-title-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
         }
 
-        .filament-material {
-            color: var(--text-color);
-            font-size: 1.3em;
-            font-weight: 700;
-            line-height: 1.2;
-        }
-
+        .filament-material { color: var(--text-color); font-size: 1.2em; font-weight: 700; }
         .filament-id-tag {
-            font-size: 0.8em;
-            font-weight: 600;
-            color: var(--secondary-color);
-            padding: 4px 10px;
-            background: rgba(33, 150, 243, 0.1); /* Hellblauer Hintergrund */
-            border-radius: 50px;
+            font-size: 0.8em; font-weight: 600; color: var(--secondary-color); padding: 4px 10px;
+            background: rgba(33, 150, 243, 0.1); border-radius: 50px;
         }
 
-        /* Detail-Grid */
         .details-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px 15px;
-            font-size: 0.9em;
-            padding: 10px 0;
-            border-top: 1px dashed #e0e0e0;
-            margin-bottom: 10px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px 15px; font-size: 0.9em;
+            padding: 10px 0; border-top: 1px dashed var(--border-color); margin-bottom: 10px;
         }
 
-        .detail-label {
-            color: #757575; /* Graues Label */
-            font-weight: 500;
-        }
-
-        .detail-value {
-            font-weight: 400;
-            color: var(--text-color);
-        }
+        .detail-label { color: #757575; font-weight: 500; }
+        .detail-value { font-weight: 400; color: var(--text-color); }
         
-        /* Status Badge */
         .status-badge {
-            position: absolute;
-            top: 0; 
-            right: 0;
-            padding: 6px 14px;
-            border-top-right-radius: 10px;
-            border-bottom-left-radius: 10px;
-            font-size: 0.8em;
-            font-weight: bold;
-            color: white;
+            position: absolute; top: 0; right: 0; padding: 6px 14px; border-top-right-radius: 10px;
+            border-bottom-left-radius: 10px; font-size: 0.8em; font-weight: bold; color: white;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         .status-badge.neu { background: var(--success-color); }
         .status-badge.gebraucht { background: var(--warning-color); color: var(--text-color); }
         .status-badge.sonstiges { background: var(--danger-color); }
 
-        /* Timestamp */
         .timestamp {
-            font-size: 0.75em;
-            color: #9E9E9E;
-            text-align: right;
-            border-top: 1px dashed #e0e0e0;
+            font-size: 0.75em; color: #9E9E9E; text-align: right; border-top: 1px dashed var(--border-color);
             padding-top: 10px;
         }
         
-        /* Spinner */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #spinner {
-            display: none; 
-            position: fixed; 
-            top: 20px; 
-            right: 20px; 
-            z-index: 1000;
+            display: none; position: fixed; top: 20px; right: 20px; z-index: 1000;
         }
         #spinner > div {
-            border: 4px solid #f0f0f0; 
-            border-top: 4px solid var(--primary-color);
-            border-radius: 50%; 
-            width: 25px; 
-            height: 25px; 
-            animation: spin 1s linear infinite;
+            border: 4px solid #f0f0f0; border-top: 4px solid var(--accent-color);
+            border-radius: 50%; width: 25px; height: 25px; animation: spin 1s linear infinite;
         }
+        
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Filament Lager: <span id="roll-count">0</span> Rollen</h2>
-    <div id="spinner">
-        <div></div>
+    <header>
+        <h1>Filament Lager Verwaltung 📦</h1>
+        <p style="text-align: center; color: #757575;">Live-Übersicht im Fokus, Hinzufügen auf Knopfdruck.</p>
+    </header>
+    
+    <div class="toggle-button-container">
+        <button id="toggle-scanner-button" onclick="toggleScanner()">
+            + Filament hinzufügen (Barcode-Scanner/Formular öffnen)
+        </button>
     </div>
-    <div id="postsContainer">
-        <div style="text-align: center; padding: 40px; color: #757575;">Daten werden geladen...</div>
+
+    <div id="toggleSection" class="card-section">
+        <h2>📷 Barcode-Erfassung</h2>
+        
+        <div id="interactive" class="viewport"></div>
+
+        <div class="controls">
+            <button onclick="startScanner()">Scanner neu starten</button>
+            <button onclick="stopScanner()">Scanner stoppen</button>
+        </div>
+
+        <h3>Erkanntes ID-Ergebnis:</h3>
+        <div id="barcode-output">
+            Hier erscheint der gescannte Code...
+        </div>
+
+        <button id="copy-button" onclick="copyBarcode()">
+            📋 Manuell kopieren
+        </button>
+        
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 30px 0;">
+
+        <h2>📄 Filament eintragen</h2>
+        <iframe id="google-form-embed" src="https://docs.google.com/forms/d/e/1FAIpQLSeiWTkDFHc0OLWKei7bXMhW7UJSNOW5VpmUj7sI-lNlkT5O3g/viewform?embedded=true"></iframe>
+    </div>
+    
+    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 30px 0;">
+
+    <div id="dashboard-section" class="card-section">
+        <h2>Live Bestandsübersicht: <span id="roll-count">0</span> Rollen</h2>
+        <div id="spinner">
+            <div></div>
+        </div>
+        <div id="postsContainer">
+            <div style="text-align: center; padding: 40px; color: #757575;">Daten werden geladen...</div>
+        </div>
     </div>
 </div>
 
 <script>
+    // =========================================================
+    // --- JAVASCRIPT: DASHBOARD LOGIK (CODE 1) ---
+    // =========================================================
     const postsContainer = document.getElementById('postsContainer');
     const spinner = document.getElementById('spinner');
     const rollCount = document.getElementById('roll-count');
+    const toggleSection = document.getElementById('toggleSection');
+    const toggleButton = document.getElementById('toggle-scanner-button');
     
     // WICHTIG: ERSETZEN SIE DIESE URL durch Ihre bereitgestellte Apps Script URL!
     const API_URL = 'https://script.google.com/macros/s/AKfycbyYd7OKN3y8q2lZ-JLGGa8gp3JlhObdFBhRr0eeyNDlwVddoEKgMqwgz7RCvtyCdfDa/exec'; 
 
     async function loadPosts(showSpinner = false) {
         if (showSpinner) spinner.style.display = 'block'; 
-
+        // ... (Der Rest der loadPosts-Funktion bleibt unverändert)
         try {
             const res = await fetch(API_URL);
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -197,10 +265,8 @@
                 return;
             }
             
-            // Gesamtanzahl der Rollen im Header aktualisieren
             rollCount.textContent = posts.length;
             
-            // Filamente nach der ID (Reihennummer) sortieren (neuester zuerst)
             posts.sort((a, b) => b.id - a.id);
             
             posts.forEach((filament, i) => {
@@ -209,7 +275,6 @@
                 
                 if (i === 0) div.classList.add('highlight'); 
 
-                // Status für Badge bestimmen
                 let statusClass = 'neu';
                 const statusText = String(filament.status).toLowerCase();
                 
@@ -221,7 +286,6 @@
                     statusClass = 'neu';
                 }
                 
-                // HTML-Struktur des Eintrags mit dem neuen Details-Grid
                 div.innerHTML = `
                     <div class="status-badge ${statusClass}">
                         ${String(filament.status).toUpperCase()}
@@ -255,11 +319,140 @@
         }
     }
 
-    // Erstes Laden der Daten
-    loadPosts(false);
+    // Automatisches Aktualisieren der Übersicht alle 1 Sekunde
+    setInterval(() => loadPosts(true), 1000); 
 
-    // Automatische Aktualisierung alle 1 Sekunde (1000 ms)
-    setInterval(() => loadPosts(true), 1000);
+
+    // =========================================================
+    // --- JAVASCRIPT: SCANNER LOGIK (CODE 2) ---
+    // =========================================================
+
+    let isScannerRunning = false;
+    let lastScannedCode = null;
+    let scanDebounceTimer = null;
+    
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playBeep() {
+        if (audioContext.state === 'suspended') { audioContext.resume(); }
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); 
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.1); 
+    }
+    
+    function autoCopy(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            console.log(`Barcode "${code}" automatisch kopiert.`);
+            const outputElement = document.getElementById('barcode-output');
+            outputElement.style.backgroundColor = '#d4edda';
+            setTimeout(() => {
+                outputElement.style.backgroundColor = '#e2ffe8';
+            }, 500);
+        }).catch(err => {
+            console.warn('Automatisches Kopieren fehlgeschlagen. Bitte manuell kopieren.', err);
+        });
+    }
+
+    function startScanner() {
+        if (isScannerRunning) return;
+
+        Quagga.init({
+            inputStream: {
+                name: "Live",
+                type: "LiveStream",
+                target: document.querySelector('#interactive'), 
+                constraints: {
+                    facingMode: "environment" 
+                }
+            },
+            decoder: {
+                readers: ["ean_reader", "code_128_reader", "code_39_reader"] 
+            }
+        }, function(err) {
+            if (err) {
+                document.getElementById('barcode-output').innerText = 'Fehler beim Starten der Kamera. Bitte HTTPS verwenden und Berechtigungen erteilen.';
+                console.error(err);
+                return
+            }
+            Quagga.start();
+            isScannerRunning = true;
+            console.log("Scanner gestartet.");
+        });
+
+        Quagga.onDetected(function(result) {
+            const code = result.codeResult.code;
+
+            if (code !== lastScannedCode || !scanDebounceTimer) {
+                document.getElementById('barcode-output').innerText = code;
+                playBeep();
+                autoCopy(code);
+                
+                lastScannedCode = code;
+                if (scanDebounceTimer) clearTimeout(scanDebounceTimer);
+                scanDebounceTimer = setTimeout(() => {
+                    scanDebounceTimer = null;
+                    lastScannedCode = null; 
+                }, 2000);
+            }
+        });
+    }
+
+    function stopScanner() {
+        if (!isScannerRunning) return;
+        Quagga.stop();
+        isScannerRunning = false;
+        if (scanDebounceTimer) clearTimeout(scanDebounceTimer);
+        console.log("Scanner gestoppt.");
+    }
+
+    function copyBarcode() {
+        const barcodeText = document.getElementById('barcode-output').innerText.trim();
+        if (barcodeText.includes('Hier erscheint der gescannte Code') || barcodeText.startsWith('Fehler beim Starten')) {
+            alert('Bitte zuerst einen Barcode scannen!');
+            return;
+        }
+
+        navigator.clipboard.writeText(barcodeText).then(() => {
+            alert('Barcode "' + barcodeText + '" manuell erfolgreich kopiert!');
+        }).catch(err => {
+            console.error('Kopieren fehlgeschlagen: ', err);
+            alert('Kopieren fehlgeschlagen.');
+        });
+    }
+
+
+    // =========================================================
+    // --- JAVASCRIPT: TOGGLE FUNKTION ---
+    // =========================================================
+
+    function toggleScanner() {
+        const isVisible = toggleSection.style.display === 'block';
+
+        if (isVisible) {
+            // Verstecken
+            toggleSection.style.display = 'none';
+            toggleButton.innerText = '+ Filament hinzufügen (Barcode-Scanner/Formular öffnen)';
+            stopScanner(); // Kamera stoppen, um Ressourcen zu sparen
+        } else {
+            // Anzeigen
+            toggleSection.style.display = 'block';
+            toggleButton.innerText = '✕ Scanner/Formular schließen';
+            startScanner(); // Scanner starten
+        }
+    }
+
+
+    // ERSTES LADEN: Nur das Dashboard starten
+    window.onload = function() {
+        loadPosts(false);
+        // Der Scanner startet NICHT automatisch beim Laden, da er initial versteckt ist.
+    }
 </script>
 
 </body>
